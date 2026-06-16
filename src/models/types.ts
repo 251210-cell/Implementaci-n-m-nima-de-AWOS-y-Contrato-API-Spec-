@@ -16,7 +16,6 @@ export interface Category {
   activo: boolean;
   created_at: Date;
 }
-
 // omite el id y la fecha de creacion
 export type CreateUserInput = Omit<User, 'id' | 'created_at'>;
 export type CreateCategoryInput = Omit<Category, 'id' | 'created_at'>;
