@@ -64,14 +64,15 @@ async function apiFetch<T>(
   return (await res.json()) as ApiResponse<T>;
 }
 
- 
-type Tab = 'categorias' | 'usuarios' | 'direcciones' | 'pagos';
+
+type Tab = 'categorias' | 'usuarios' | 'direcciones' | 'pagos' | 'perfil';
 
 const TABS: { key: Tab; label: string }[] = [
   { key: 'categorias', label: 'Categorías' },
   { key: 'usuarios', label: 'Usuarios' },
   { key: 'direcciones', label: 'Mis direcciones' },
   { key: 'pagos', label: 'Pagos' },
+  { key: 'perfil', label: 'Mi perfil' },
 ];
 
 
@@ -90,6 +91,7 @@ export default function Home() {
   const [categorias, setCategorias] = useState<Category[]>([]);
   const [direcciones, setDirecciones] = useState<Address[]>([]);
   const [pagos, setPagos] = useState<Payment[]>([]);
+  const [perfil, setPerfil] = useState<User | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -108,6 +110,16 @@ export default function Home() {
   const [addressFormError, setAddressFormError] = useState<string | null>(null);
   const [addressFormLoading, setAddressFormLoading] = useState(false);
 
+  // Form de edición de perfil
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    nombre: '',
+    email: '',
+    telefono: '',
+  });
+  const [profileFormError, setProfileFormError] = useState<string | null>(null);
+  const [profileFormLoading, setProfileFormLoading] = useState(false);
+
   useEffect(() => {
     const saved = localStorage.getItem('auth_token');
     if (saved) setToken(saved);
@@ -121,6 +133,8 @@ export default function Home() {
     if (tab === 'usuarios') loadUsuarios();
     if (tab === 'direcciones') loadDirecciones();
     if (tab === 'pagos') loadPagos();
+    if (tab === 'perfil') loadPerfil();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, token]);
 
   async function handleLogin(e: React.FormEvent) {
@@ -152,6 +166,7 @@ export default function Home() {
     setCategorias([]);
     setDirecciones([]);
     setPagos([]);
+    setPerfil(null);
     setError(null);
   }
 
@@ -203,6 +218,23 @@ export default function Home() {
     setLoading(false);
   }
 
+  async function loadPerfil() {
+    setLoading(true);
+    setError(null);
+    const res = await apiFetch<User>('/users/me', token);
+    if (!res.success || !res.data) {
+      setError(res.error?.message ?? 'No se pudo cargar el perfil.');
+    } else {
+      setPerfil(res.data);
+      setProfileForm({
+        nombre: res.data.nombre,
+        email: res.data.email,
+        telefono: res.data.telefono,
+      });
+    }
+    setLoading(false);
+  }
+
   async function handleCreateAddress(e: React.FormEvent) {
     e.preventDefault();
     setAddressFormLoading(true);
@@ -236,6 +268,31 @@ export default function Home() {
     });
     setShowAddressForm(false);
     loadDirecciones();
+  }
+
+  async function handleUpdateProfile(e: React.FormEvent) {
+    e.preventDefault();
+    setProfileFormLoading(true);
+    setProfileFormError(null);
+
+    const res = await apiFetch<User>('/users/me', token, {
+      method: 'PATCH',
+      body: JSON.stringify(profileForm),
+    });
+
+    setProfileFormLoading(false);
+
+    if (!res.success || !res.data) {
+      setProfileFormError(
+        res.error?.details?.map((d: any) => d.issue).join(' ') ??
+          res.error?.message ??
+          'No se pudo actualizar el perfil.',
+      );
+      return;
+    }
+
+    setPerfil(res.data);
+    setEditingProfile(false);
   }
 
   
@@ -348,9 +405,9 @@ export default function Home() {
         <div>
           <div className="flex justify-between items-center mb-3">
             <p className="text-sm text-zinc-500">{direcciones.length} dirección(es)</p>
+           
           </div>
 
-        
           <ul className="flex flex-col gap-2">
             {direcciones.map((a) => (
               <li key={a.id} className="border rounded p-3">
@@ -388,6 +445,76 @@ export default function Home() {
             ))}
           </tbody>
         </table>
+      )}
+
+      {!loading && !error && tab === 'perfil' && perfil && (
+        <div className="border rounded-lg p-4 max-w-md">
+          {!editingProfile ? (
+            <div className="flex flex-col gap-2">
+              <p><span className="text-zinc-500">Nombre:</span> {perfil.nombre}</p>
+              <p><span className="text-zinc-500">Email:</span> {perfil.email}</p>
+              <p><span className="text-zinc-500">Teléfono:</span> {perfil.telefono}</p>
+              <p><span className="text-zinc-500">Rol:</span> {perfil.rol}</p>
+              <p><span className="text-zinc-500">Activo:</span> {perfil.activo ? 'Sí' : 'No'}</p>
+              <button
+                onClick={() => setEditingProfile(true)}
+                className="mt-2 text-sm bg-black text-white rounded px-3 py-1.5 w-fit"
+              >
+                Editar perfil
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleUpdateProfile} className="flex flex-col gap-2">
+              <input
+                placeholder="Nombre"
+                value={profileForm.nombre}
+                onChange={(e) =>
+                  setProfileForm({ ...profileForm, nombre: e.target.value })
+                }
+                className="border rounded px-3 py-2"
+                required
+              />
+              <input
+                type="email"
+                placeholder="Email"
+                value={profileForm.email}
+                onChange={(e) =>
+                  setProfileForm({ ...profileForm, email: e.target.value })
+                }
+                className="border rounded px-3 py-2"
+                required
+              />
+              <input
+                placeholder="Teléfono"
+                value={profileForm.telefono}
+                onChange={(e) =>
+                  setProfileForm({ ...profileForm, telefono: e.target.value })
+                }
+                className="border rounded px-3 py-2"
+                required
+              />
+              {profileFormError && (
+                <p className="text-red-600 text-sm">{profileFormError}</p>
+              )}
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  disabled={profileFormLoading}
+                  className="bg-black text-white rounded px-3 py-2 disabled:opacity-50"
+                >
+                  {profileFormLoading ? 'Guardando...' : 'Guardar cambios'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditingProfile(false)}
+                  className="border rounded px-3 py-2"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
       )}
     </div>
   );
