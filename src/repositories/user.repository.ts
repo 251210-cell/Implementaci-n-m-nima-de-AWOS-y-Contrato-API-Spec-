@@ -19,7 +19,6 @@ export class UserRepository {
   async getAll(): Promise<User[]> {
     return usersTable;
   }
-
   async findByEmail(email: string): Promise<User | undefined> {
     return usersTable.find(u => u.email === email);
   }
