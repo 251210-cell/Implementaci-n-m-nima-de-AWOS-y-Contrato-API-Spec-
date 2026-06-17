@@ -20,7 +20,7 @@ export async function getAuthUser(req: NextRequest): Promise<User | null> {
   const repo = new UserRepository();
   // Mock: el token es el email del usuario
   const user = await repo.findByEmail(token);
-  if (!user || !user.activo) return null;  // RN-08
+  if (!user || !user.activo) return null;  
 
   return user;
 }
