@@ -4,7 +4,7 @@ import crypto from 'crypto';
 const addressesTable: Address[] = [
   {
     id: 'adr-0010',
-    user_id: 'seed-user-id',   // se reemplaza en runtime con IDs reales
+    user_id: 'seed-user-id',   
     destinatario: 'Karla Cruz',
     telefono: '+52 961 100 0001',
     calle: 'Av. Central 45',

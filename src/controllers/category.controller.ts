@@ -8,7 +8,7 @@ import { getAuthUser, requireAdmin } from '../lib/auth';
 
 const categoryService = new CategoryService();
 
-// Simulación de productos por categoría
+
 const MOCK_PRODUCTS: Record<string, object[]> = {
   'c100-0001': [
     { id: 'prod-0301', nombre: 'Audífonos inalámbricos', categoria_id: 'c100-0001', precio: 799.00, stock: 15, activo: true },
@@ -21,7 +21,7 @@ const MOCK_PRODUCTS: Record<string, object[]> = {
 
 export class CategoryController {
 
-  // ── GET /api/v1/categories  (pública) ────────────────────────────────────
+  // GET /api/v1/categories - publica
   static async getCategories(req: NextRequest) {
     try {
       const { page, limit, search, errors } = parsePagination(req.nextUrl.searchParams);
@@ -44,11 +44,11 @@ export class CategoryController {
     }
   }
 
-  // ── POST /api/v1/categories  (solo admin) ────────────────────────────────
+  // POST /api/v1/categories - SOLO ADMIN
   static async createCategory(req: NextRequest) {
     try {
       const user = await getAuthUser(req);
-      if (!requireAdmin(user)) return forbidden();  // RN-02
+      if (!requireAdmin(user)) return forbidden();  
 
       const body = await req.json();
       if (!body.nombre)
@@ -68,7 +68,7 @@ export class CategoryController {
     }
   }
 
-  // ── PATCH /api/v1/categories/{id}  (solo admin) ──────────────────────────
+  // PATCH /api/v1/categories/{id} - SOLO ADMIN
   static async updateCategory(req: NextRequest, id: string) {
     try {
       const user = await getAuthUser(req);
@@ -76,7 +76,6 @@ export class CategoryController {
 
       const body = await req.json();
 
-      // RN-05: nombre no puede estar vacío
       if (body.nombre !== undefined && body.nombre.trim() === '')
         return unprocessable([{ field: 'nombre', issue: 'El nombre no puede estar vacío.' }]);
 
@@ -91,7 +90,7 @@ export class CategoryController {
     }
   }
 
-  // ── DELETE /api/v1/categories/{id}  (solo admin) ─────────────────────────
+  // DELETE /api/v1/categories/{id}  - SOLO ADMIN
   static async deleteCategory(req: NextRequest, id: string) {
     try {
       const user = await getAuthUser(req);
@@ -106,7 +105,7 @@ export class CategoryController {
     }
   }
 
-  // ── GET /api/v1/categories/{id}/products  (pública) ──────────────────────
+  //  GET /api/v1/categories/{id}/products - PUBLICA
   static async getProductsByCategory(req: NextRequest, id: string) {
     try {
       const { page, limit, search, errors } = parsePagination(req.nextUrl.searchParams);

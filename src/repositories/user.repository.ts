@@ -1,7 +1,6 @@
 import { User, CreateUserInput } from '../models/types';
 import crypto from 'crypto';
 
-// Tabla en memoria (simulación de BD)
 const usersTable: User[] = [
   {
     id: crypto.randomUUID(),

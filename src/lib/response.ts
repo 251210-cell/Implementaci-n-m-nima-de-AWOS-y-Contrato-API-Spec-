@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { ApiResponse, PaginationMeta, ApiError } from '../models/types';
 
-// ──────────────────────────────────────────────
-//  Fábrica de respuestas exitosas
-// ──────────────────────────────────────────────
+
+// Respuestas exitosas
+
 
 export function ok<T>(data: T, meta?: PaginationMeta, status = 200): NextResponse {
   const body: ApiResponse<T> = {
@@ -23,9 +23,8 @@ export function noContent(): NextResponse {
   return new NextResponse(null, { status: 204 });
 }
 
-// ──────────────────────────────────────────────
-//  Fábrica de respuestas de error
-// ──────────────────────────────────────────────
+// Respuestas de error
+
 
 function error(
   status: number,
@@ -71,9 +70,8 @@ export const unprocessable = (details: ApiError['details']) =>
 export const serverError = (message = 'INTERNAL_SERVER_ERROR') =>
   error(500, '500', message);
 
-// ──────────────────────────────────────────────
 //  Parseo de query params de paginación
-// ──────────────────────────────────────────────
+
 
 const SORT_FIELDS_ALLOWED = ['nombre', 'created_at', 'monto'];
 

@@ -4,7 +4,6 @@ import { CreateAddressInput, Address } from '../models/types';
 export class AddressService {
   private repo = new AddressRepository();
 
-  /** RN-04: un cliente solo puede ver sus propias direcciones */
   async listAddresses(userId: string): Promise<Address[]> {
     return this.repo.getAllByUserId(userId);
   }
@@ -17,10 +16,8 @@ export class AddressService {
     return this.repo.create(data);
   }
 
-  /** RN-06: eliminación física del registro */
   async deleteAddress(id: string, userId: string): Promise<boolean> {
     const address = await this.repo.findById(id);
-    // RN-04: solo puede eliminar sus propias direcciones
     if (!address || address.user_id !== userId) return false;
     return this.repo.delete(id);
   }

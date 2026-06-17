@@ -12,9 +12,8 @@ export class PaymentService {
     return this.repo.findById(id);
   }
 
-  /** RN-03: el monto debe coincidir con el total de la orden (simulado) */
+
   async createPayment(data: CreatePaymentInput): Promise<Payment> {
-    // En producción aquí se consultaría el total real de la orden
     if (!data.order_id) throw new Error('MISSING_ORDER_ID');
     if (!data.monto || data.monto <= 0) throw new Error('INVALID_AMOUNT');
     return this.repo.create({ ...data, estado: 'pendiente' });

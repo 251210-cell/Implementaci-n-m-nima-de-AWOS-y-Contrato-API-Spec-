@@ -10,7 +10,7 @@ const userService = new UserService();
 
 export class UserController {
 
-  // ── GET /api/v1/users  (solo admin) ──────────────────────────────────────
+  // GET /api/v1/users - SOLO ADMIN 
   static async getUsers(req: NextRequest) {
     try {
       const user = await getAuthUser(req);
@@ -23,7 +23,6 @@ export class UserController {
 
       let users = await userService.listUsers();
 
-      // Ordenar
       if (sort === 'nombre')
         users = users.sort((a, b) =>
           order === 'asc'
@@ -39,7 +38,6 @@ export class UserController {
 
       const total = users.length;
       const paginated = users.slice((page - 1) * limit, page * limit);
-      // Nunca exponer password_hash
       const safeUsers = paginated.map(({ password_hash: _, ...u }) => u);
 
       return ok(safeUsers, { total, page, per_page: limit, sort, order });
@@ -48,7 +46,7 @@ export class UserController {
     }
   }
 
-  // ── GET /api/v1/users/me ─────────────────────────────────────────────────
+  // GET /api/v1/users/me - AUTENTIFICADO
   static async getMe(req: NextRequest) {
     try {
       const user = await getAuthUser(req);
@@ -60,7 +58,7 @@ export class UserController {
     }
   }
 
-  // ── PATCH /api/v1/users/me ───────────────────────────────────────────────
+  // PATCH /api/v1/users/me - AUTENTIFICADO
   static async updateMe(req: NextRequest) {
     try {
       const user = await getAuthUser(req);
@@ -77,7 +75,7 @@ export class UserController {
     }
   }
 
-  // ── POST /api/v1/auth/register  (pública) ────────────────────────────────
+  // POST /api/v1/auth/register - PÚBLICA
   static async register(req: NextRequest) {
     try {
       const body = await req.json();
@@ -89,7 +87,7 @@ export class UserController {
       const newUser = await userService.registerUser({
         nombre,
         email,
-        password_hash, // en producción se hashearía aquí con bcrypt
+        password_hash, 
         rol: 'cliente',
         activo: true,
         telefono: telefono ?? '',
@@ -104,7 +102,7 @@ export class UserController {
     }
   }
 
-  // ── POST /api/v1/auth/login  (pública) ───────────────────────────────────
+  // POST /api/v1/auth/login - PÚBLICA
   static async login(req: NextRequest) {
     try {
       const body = await req.json();
@@ -116,7 +114,7 @@ export class UserController {
       const user = await userService.login(email, password);
       const { password_hash: _, ...safe } = user;
 
-      // Mock: devolvemos el email como "token"
+      
       return ok({ token: email, user: safe });
     } catch (e: any) {
       if (e.message === 'INVALID_CREDENTIALS')

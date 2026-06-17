@@ -15,7 +15,7 @@ const REQUIRED_FIELDS = [
 
 export class AddressController {
 
-  // ── GET /api/v1/me/address  (autenticado) ────────────────────────────────
+  //GET /api/v1/me/addresses - AUTENTICADO
   static async getAddresses(req: NextRequest) {
     try {
       const user = await getAuthUser(req);
@@ -43,14 +43,13 @@ export class AddressController {
     }
   }
 
-  // ── GET /api/v1/me/address/{id}  (autenticado) ───────────────────────────
+  //GET /api/v1/me/address/{id} - AUTENTICADO
   static async getAddressById(req: NextRequest, id: string) {
     try {
       const user = await getAuthUser(req);
       if (!requireAuth(user)) return unauthorized();
 
       const address = await addressService.getAddressById(id);
-      // RN-04: solo puede ver sus propias direcciones
       if (!address || address.user_id !== user!.id)
         return notFound('id', 'No existe una dirección con el ID proporcionado.');
 
@@ -60,7 +59,7 @@ export class AddressController {
     }
   }
 
-  // ── POST /api/v1/me/address  (autenticado) ───────────────────────────────
+  // POST /api/v1/me/address - AUTENTICADO
   static async createAddress(req: NextRequest) {
     try {
       const user = await getAuthUser(req);
@@ -92,7 +91,7 @@ export class AddressController {
     }
   }
 
-  // ── DELETE /api/v1/me/address/{id}  (autenticado) ────────────────────────
+  // DELETE /api/v1/me/address/{id} - AUTENTICADO
   static async deleteAddress(req: NextRequest, id: string) {
     try {
       const user = await getAuthUser(req);
@@ -102,7 +101,6 @@ export class AddressController {
       if (!deleted)
         return notFound('id', 'No existe una dirección con el ID proporcionado o no te pertenece.');
 
-      // RN-06: eliminación física → 204 sin cuerpo
       return noContent();
     } catch {
       return serverError();

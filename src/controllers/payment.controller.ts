@@ -10,7 +10,7 @@ const paymentService = new PaymentService();
 
 export class PaymentController {
 
-  // ── GET /api/v1/payments  (autenticado: cliente/admin) ───────────────────
+  // GET /api/v1/payments - AUTENTIFICADO
   static async getPayments(req: NextRequest) {
     try {
       const user = await getAuthUser(req);
@@ -23,7 +23,6 @@ export class PaymentController {
 
       let payments = await paymentService.listPayments();
 
-      // RN-07: cliente solo ve sus pagos (aquí simulado; en producción se filtrarían por user_id de la orden)
       if (sort === 'monto')
         payments = payments.sort((a, b) =>
           order === 'asc' ? a.monto - b.monto : b.monto - a.monto,
@@ -44,7 +43,7 @@ export class PaymentController {
     }
   }
 
-  // ── GET /api/v1/payments/{id}  (autenticado) ─────────────────────────────
+  // GET /api/v1/payments/{id} - AUTENTIFICADO
   static async getPaymentById(req: NextRequest, id: string) {
     try {
       const user = await getAuthUser(req);
@@ -59,7 +58,7 @@ export class PaymentController {
     }
   }
 
-  // ── POST /api/v1/payments  (autenticado) ─────────────────────────────────
+  // POST /api/v1/payments - AUTENTIFICADO
   static async createPayment(req: NextRequest) {
     try {
       const user = await getAuthUser(req);

@@ -1,6 +1,6 @@
-// ──────────────────────────────────────────────
-//  Entidades del dominio
-// ──────────────────────────────────────────────
+
+//  Entidades 
+
 
 export interface User {
   id: string;
@@ -45,18 +45,16 @@ export interface Address {
   created_at: Date;
 }
 
-// ──────────────────────────────────────────────
-//  Inputs de creación (sin id ni created_at)
-// ──────────────────────────────────────────────
+
+//  Inputs de creación se excluyen id y created_at
+
 
 export type CreateUserInput = Omit<User, 'id' | 'created_at'>;
 export type CreateCategoryInput = Omit<Category, 'id' | 'created_at'>;
 export type CreatePaymentInput = Omit<Payment, 'id' | 'created_at'>;
 export type CreateAddressInput = Omit<Address, 'id' | 'created_at'>;
 
-// ──────────────────────────────────────────────
-//  Tipos de respuesta estandarizada del contrato
-// ──────────────────────────────────────────────
+// respuestas estandarizadas de la API
 
 export interface PaginationMeta {
   total: number;
@@ -81,9 +79,9 @@ export interface ApiError {
   details?: Array<{ field?: string; issue: string }>;
 }
 
-// ──────────────────────────────────────────────
+
 //  Query params de paginación
-// ──────────────────────────────────────────────
+
 
 export interface PaginationQuery {
   page?: number;
