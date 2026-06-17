@@ -1,10 +1,11 @@
 import { Address, CreateAddressInput } from '../models/types';
+import { KARLA_ID } from './user.repository';
 import crypto from 'crypto';
 
 const addressesTable: Address[] = [
   {
     id: 'adr-0010',
-    user_id: 'seed-user-id',   
+    user_id: KARLA_ID,   
     destinatario: 'Karla Cruz',
     telefono: '+52 961 100 0001',
     calle: 'Av. Central 45',

@@ -43,7 +43,7 @@ export class AddressController {
     }
   }
 
-  //GET /api/v1/me/address/{id} - AUTENTICADO
+  //GET /api/v1/me/addresses/{id} - AUTENTICADO
   static async getAddressById(req: NextRequest, id: string) {
     try {
       const user = await getAuthUser(req);
@@ -59,7 +59,7 @@ export class AddressController {
     }
   }
 
-  // POST /api/v1/me/address - AUTENTICADO
+  // POST /api/v1/me/addresses - AUTENTICADO
   static async createAddress(req: NextRequest) {
     try {
       const user = await getAuthUser(req);
@@ -91,7 +91,7 @@ export class AddressController {
     }
   }
 
-  // DELETE /api/v1/me/address/{id} - AUTENTICADO
+  // DELETE /api/v1/me/addresses/{id} - AUTENTICADO
   static async deleteAddress(req: NextRequest, id: string) {
     try {
       const user = await getAuthUser(req);

@@ -1,9 +1,11 @@
 import { User, CreateUserInput } from '../models/types';
 import crypto from 'crypto';
 
+export const KARLA_ID = crypto.randomUUID(); 
+export const ADMIN_ID = crypto.randomUUID();
 const usersTable: User[] = [
   {
-    id: crypto.randomUUID(),
+    id: ADMIN_ID,
     nombre: 'Admin Inicial',
     email: 'admin@correo.com',
     password_hash: '$2b$10$falsa_password_encriptada',
@@ -13,7 +15,7 @@ const usersTable: User[] = [
     created_at: new Date('2026-03-05T09:30:00Z'),
   },
   {
-    id: crypto.randomUUID(),
+    id: KARLA_ID,
     nombre: 'Karla Cruz',
     email: 'karla@ejemplo.com',
     password_hash: '$2b$10$falsa_password_encriptada2',
