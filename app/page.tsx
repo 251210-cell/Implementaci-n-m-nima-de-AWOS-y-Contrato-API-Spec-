@@ -1,65 +1,394 @@
-import Image from "next/image";
+'use client';
+
+import { useEffect, useState } from 'react';
+
+interface User {
+  id: string;
+  nombre: string;
+  email: string;
+  rol: 'cliente' | 'admin';
+  activo: boolean;
+  telefono: string;
+}
+
+interface Category {
+  id: string;
+  nombre: string;
+  descripcion: string;
+  activo: boolean;
+}
+
+interface Address {
+  id: string;
+  destinatario: string;
+  telefono: string;
+  calle: string;
+  colonia: string;
+  ciudad: string;
+  estado: string;
+  codigo_postal: string;
+  pais: string;
+}
+
+interface Payment {
+  id: string;
+  order_id: string;
+  monto: number;
+  metodo: string;
+  estado: string;
+}
+
+interface ApiResponse<T> {
+  success: boolean;
+  data: T | null;
+  meta: Record<string, unknown> | null;
+  error: { code: string; message: string; details?: unknown[] } | null;
+}
+
+
+const API_BASE = '/api/v1';
+
+async function apiFetch<T>(
+  path: string,
+  token: string | null,
+  options: RequestInit = {},
+): Promise<ApiResponse<T>> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+
+  if (res.status === 204) {
+    return { success: true, data: null, meta: null, error: null };
+  }
+  return (await res.json()) as ApiResponse<T>;
+}
+
+ 
+type Tab = 'categorias' | 'usuarios' | 'direcciones' | 'pagos';
+
+const TABS: { key: Tab; label: string }[] = [
+  { key: 'categorias', label: 'Categorías' },
+  { key: 'usuarios', label: 'Usuarios' },
+  { key: 'direcciones', label: 'Mis direcciones' },
+  { key: 'pagos', label: 'Pagos' },
+];
+
 
 export default function Home() {
+  const [token, setToken] = useState<string | null>(null);
+  const [checkingSession, setCheckingSession] = useState(true);
+
+  const [emailInput, setEmailInput] = useState('admin@correo.com');
+  const [passwordInput, setPasswordInput] = useState('cualquier-cosa');
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [loginLoading, setLoginLoading] = useState(false);
+
+  const [tab, setTab] = useState<Tab>('categorias');
+
+  const [usuarios, setUsuarios] = useState<User[]>([]);
+  const [categorias, setCategorias] = useState<Category[]>([]);
+  const [direcciones, setDirecciones] = useState<Address[]>([]);
+  const [pagos, setPagos] = useState<Payment[]>([]);
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const [showAddressForm, setShowAddressForm] = useState(false);
+  const [addressForm, setAddressForm] = useState({
+    destinatario: '',
+    telefono: '',
+    calle: '',
+    colonia: '',
+    ciudad: '',
+    estado: '',
+    codigo_postal: '',
+    pais: 'MX',
+  });
+  const [addressFormError, setAddressFormError] = useState<string | null>(null);
+  const [addressFormLoading, setAddressFormLoading] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('auth_token');
+    if (saved) setToken(saved);
+    setCheckingSession(false);
+  }, []);
+
+  useEffect(() => {
+    if (!token) return;
+
+    if (tab === 'categorias') loadCategorias();
+    if (tab === 'usuarios') loadUsuarios();
+    if (tab === 'direcciones') loadDirecciones();
+    if (tab === 'pagos') loadPagos();
+  }, [tab, token]);
+
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
+    setLoginLoading(true);
+    setLoginError(null);
+
+    const res = await apiFetch<{ token: string; user: User }>('/auth/login', null, {
+      method: 'POST',
+      body: JSON.stringify({ email: emailInput, password: passwordInput }),
+    });
+
+    setLoginLoading(false);
+
+    if (!res.success || !res.data) {
+      setLoginError(res.error?.message ?? 'Error al iniciar sesión');
+      return;
+    }
+
+    localStorage.setItem('auth_token', res.data.token);
+    setToken(res.data.token);
+    setTab('categorias');
+  }
+
+  function handleLogout() {
+    localStorage.removeItem('auth_token');
+    setToken(null);
+    setUsuarios([]);
+    setCategorias([]);
+    setDirecciones([]);
+    setPagos([]);
+    setError(null);
+  }
+
+  async function loadCategorias() {
+    setLoading(true);
+    setError(null);
+    const res = await apiFetch<Category[]>('/categories', token);
+    if (!res.success || !res.data) {
+      setError(res.error?.message ?? 'No se pudieron cargar las categorías.');
+    } else {
+      setCategorias(res.data);
+    }
+    setLoading(false);
+  }
+
+  async function loadUsuarios() {
+    setLoading(true);
+    setError(null);
+    const res = await apiFetch<User[]>('/users', token);
+    if (!res.success || !res.data) {
+      setError(res.error?.message ?? 'No se pudieron cargar los usuarios.');
+    } else {
+      setUsuarios(res.data);
+    }
+    setLoading(false);
+  }
+
+  async function loadDirecciones() {
+    setLoading(true);
+    setError(null);
+    const res = await apiFetch<Address[]>('/me/addresses', token);
+    if (!res.success || !res.data) {
+      setError(res.error?.message ?? 'No se pudieron cargar las direcciones.');
+    } else {
+      setDirecciones(res.data);
+    }
+    setLoading(false);
+  }
+
+  async function loadPagos() {
+    setLoading(true);
+    setError(null);
+    const res = await apiFetch<Payment[]>('/payments', token);
+    if (!res.success || !res.data) {
+      setError(res.error?.message ?? 'No se pudieron cargar los pagos.');
+    } else {
+      setPagos(res.data);
+    }
+    setLoading(false);
+  }
+
+  async function handleCreateAddress(e: React.FormEvent) {
+    e.preventDefault();
+    setAddressFormLoading(true);
+    setAddressFormError(null);
+
+    const res = await apiFetch<Address>('/me/addresses', token, {
+      method: 'POST',
+      body: JSON.stringify(addressForm),
+    });
+
+    setAddressFormLoading(false);
+
+    if (!res.success || !res.data) {
+      setAddressFormError(
+        res.error?.details?.map((d: any) => d.issue).join(' ') ??
+          res.error?.message ??
+          'No se pudo crear la dirección.',
+      );
+      return;
+    }
+
+    setAddressForm({
+      destinatario: '',
+      telefono: '',
+      calle: '',
+      colonia: '',
+      ciudad: '',
+      estado: '',
+      codigo_postal: '',
+      pais: 'MX',
+    });
+    setShowAddressForm(false);
+    loadDirecciones();
+  }
+
+  
+  if (checkingSession) {
+    return null;
+  }
+
+  
+  if (!token) {
+    return (
+      <div className="max-w-sm mx-auto mt-24 p-6 border rounded-lg">
+        <h1 className="text-xl font-semibold mb-4">Iniciar sesión</h1>
+        <form onSubmit={handleLogin} className="flex flex-col gap-2">
+          <input
+            type="email"
+            value={emailInput}
+            onChange={(e) => setEmailInput(e.target.value)}
+            placeholder="email"
+            className="border rounded px-3 py-2"
+            required
+          />
+          <input
+            type="password"
+            value={passwordInput}
+            onChange={(e) => setPasswordInput(e.target.value)}
+            placeholder="password"
+            className="border rounded px-3 py-2"
+            required
+          />
+          {loginError && <p className="text-red-600 text-sm">{loginError}</p>}
+          <button
+            type="submit"
+            disabled={loginLoading}
+            className="bg-black text-white rounded px-3 py-2 disabled:opacity-50"
+          >
+            {loginLoading ? 'Entrando...' : 'Entrar'}
+          </button>
+        </form>
+      </div>
+    );
+  }
+
+  
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="max-w-3xl mx-auto p-6">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-semibold">Panel de recursos</h1>
+        <div className="flex items-center gap-3">
+          <button onClick={handleLogout} className="text-sm text-red-400 underline">
+            Cerrar sesión
+          </button>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+      </div>
+
+      <div className="flex gap-2 mb-4 border-b">
+        {TABS.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={`px-3 py-2 text-sm border-b-2 -mb-px ${
+              tab === t.key
+                ? 'border-black font-medium'
+                : 'border-transparent text-zinc-500'
+            }`}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {loading && <p className="text-zinc-500">Cargando...</p>}
+      {error && <p className="text-red-600">Error: {error}</p>}
+
+      {!loading && !error && tab === 'categorias' && (
+        <ul className="flex flex-col gap-2">
+          {categorias.map((c) => (
+            <li key={c.id} className="border rounded p-3">
+              <p className="font-medium">{c.nombre}</p>
+              <p className="text-sm text-zinc-500">{c.descripcion}</p>
+            </li>
+          ))}
+          {categorias.length === 0 && <p className="text-zinc-500">Sin categorías.</p>}
+        </ul>
+      )}
+
+      {!loading && !error && tab === 'usuarios' && (
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr className="text-left border-b">
+              <th className="py-2 pr-4">Nombre</th>
+              <th className="py-2 pr-4">Email</th>
+              <th className="py-2 pr-4">Rol</th>
+              <th className="py-2 pr-4">Activo</th>
+            </tr>
+          </thead>
+          <tbody>
+            {usuarios.map((u) => (
+              <tr key={u.id} className="border-b">
+                <td className="py-2 pr-4">{u.nombre}</td>
+                <td className="py-2 pr-4">{u.email}</td>
+                <td className="py-2 pr-4">{u.rol}</td>
+                <td className="py-2 pr-4">{u.activo ? 'Sí' : 'No'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      {!loading && !error && tab === 'direcciones' && (
+        <div>
+          <div className="flex justify-between items-center mb-3">
+            <p className="text-sm text-zinc-500">{direcciones.length} dirección(es)</p>
+          </div>
+
+        
+          <ul className="flex flex-col gap-2">
+            {direcciones.map((a) => (
+              <li key={a.id} className="border rounded p-3">
+                <p className="font-medium">{a.destinatario}</p>
+                <p className="text-sm text-zinc-500">
+                  {a.calle}, {a.colonia}, {a.ciudad}, {a.estado}, {a.codigo_postal}, {a.pais}
+                </p>
+              </li>
+            ))}
+            {direcciones.length === 0 && (
+              <p className="text-zinc-500">Sin direcciones.</p>
+            )}
+          </ul>
         </div>
-      </main>
+      )}
+
+      {!loading && !error && tab === 'pagos' && (
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr className="text-left border-b">
+              <th className="py-2 pr-4">Orden</th>
+              <th className="py-2 pr-4">Monto</th>
+              <th className="py-2 pr-4">Método</th>
+              <th className="py-2 pr-4">Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pagos.map((p) => (
+              <tr key={p.id} className="border-b">
+                <td className="py-2 pr-4">{p.order_id}</td>
+                <td className="py-2 pr-4">${p.monto.toFixed(2)}</td>
+                <td className="py-2 pr-4">{p.metodo}</td>
+                <td className="py-2 pr-4">{p.estado}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 }
