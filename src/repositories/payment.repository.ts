@@ -1,9 +1,11 @@
 import { Payment, CreatePaymentInput } from '../models/types';
+import {KARLA_ID} from './user.repository';
 import crypto from 'crypto';
 
 const paymentsTable: Payment[] = [
   {
     id: 'pay-0010',
+    user_id: KARLA_ID,
     order_id: 'ord-0055',
     monto: 249.99,
     metodo: 'tarjeta',
@@ -12,6 +14,7 @@ const paymentsTable: Payment[] = [
   },
   {
     id: 'pay-0025',
+    user_id: 'seed-user-id',
     order_id: 'ord-0072',
     monto: 1299.99,
     metodo: 'transferencia',

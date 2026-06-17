@@ -23,6 +23,7 @@ export interface Category {
 
 export interface Payment {
   id: string;
+  user_id: string;
   order_id: string;
   monto: number;
   metodo: string;
